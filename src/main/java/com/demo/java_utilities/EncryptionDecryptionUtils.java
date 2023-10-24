@@ -27,6 +27,9 @@ public class EncryptionDecryptionUtils {
     private static final String RSA_ALGORITHM = "RSA";
     private static final int RSA_KEY_SIZE = 2048; // in bits
 
+    // HMAC constants
+    private static final String HMAC_ALGORITHM = "HmacSHA256";
+
     /**
      * Generates a random AES encryption key of the specified key size.
      *
@@ -40,6 +43,19 @@ public class EncryptionDecryptionUtils {
         keyGenerator.init(keySize);
         SecretKey secretKey = keyGenerator.generateKey();
         return secretKey.getEncoded();
+    }
+
+    /**
+     * Generates a random initialization vector (IV) for AES encryption.
+     *
+     * @return AES initialization vector as a byte array
+     * @throws NoSuchAlgorithmException if AES algorithm is not available
+     */
+    public static byte[] generateIV() throws NoSuchAlgorithmException {
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] iv = new byte[16]; // IV should be 16 bytes for AES
+        secureRandom.nextBytes(iv);
+        return iv;
     }
 
     /**
@@ -241,5 +257,40 @@ public class EncryptionDecryptionUtils {
                 Character.digit(hexString.charAt(i + 1), 16));
         }
         return bytes;
+    }
+
+    /**
+     * Generates an HMAC (Hash-based Message Authentication Code) using SHA-256.
+     *
+     * @param data     the data to generate HMAC for
+     * @param keyBytes the key as byte array for HMAC
+     * @return base64-encoded HMAC
+     * @throws NoSuchAlgorithmException if HMAC-SHA256 algorithm is not available
+     * @throws InvalidKeyException      if the key is invalid
+     */
+    public static String generateHmacSHA256(String data, byte[] keyBytes)
+        throws NoSuchAlgorithmException, InvalidKeyException {
+        SecretKeySpec secretKeySpec = new SecretKeySpec(
+            keyBytes,
+            HMAC_ALGORITHM
+        );
+        Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+        mac.init(secretKeySpec);
+        byte[] hmacBytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(hmacBytes);
+    }
+
+    /**
+     * Generates a SHA-256 hash of the input data.
+     *
+     * @param data the data to hash
+     * @return hexadecimal string representation of the SHA-256 hash
+     * @throws NoSuchAlgorithmException if SHA-256 algorithm is not available
+     */
+    public static String generateSHA256(String data)
+        throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+        return bytesToHex(hash);
     }
 }
