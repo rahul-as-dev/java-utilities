@@ -293,4 +293,85 @@ public class EncryptionDecryptionUtils {
         byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
         return bytesToHex(hash);
     }
+
+    /**
+     * Encodes a byte array into a base64 string.
+     *
+     * @param bytes the byte array to encode
+     * @return base64-encoded string representation of the byte array
+     */
+    public static String encodeBase64(byte[] bytes) {
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
+    /**
+     * Decodes a base64-encoded string into a byte array.
+     *
+     * @param base64Str the base64-encoded string to decode
+     * @return byte array representation of the decoded base64 string
+     */
+    public static byte[] decodeBase64(String base64Str) {
+        return Base64.getDecoder().decode(base64Str);
+    }
+
+    /**
+     * Converts a SecretKey object to a byte array.
+     *
+     * @param secretKey the SecretKey object to convert
+     * @return byte array representation of the SecretKey
+     */
+    public static byte[] secretKeyToBytes(SecretKey secretKey) {
+        return secretKey.getEncoded();
+    }
+
+    /**
+     * Converts a byte array to a SecretKey object for a specified algorithm.
+     *
+     * @param keyBytes the byte array containing the key
+     * @param algorithm the algorithm name (e.g., AES, DES)
+     * @return SecretKey object generated from the byte array
+     */
+    public static SecretKey bytesToSecretKey(
+        byte[] keyBytes,
+        String algorithm
+    ) {
+        return new SecretKeySpec(keyBytes, algorithm);
+    }
+
+    /**
+     * Converts a KeyPair object to byte arrays for both public and private keys.
+     *
+     * @param keyPair the KeyPair object containing public and private keys
+     * @return an array where index 0 is public key bytes and index 1 is private key bytes
+     */
+    public static byte[][] keyPairToBytes(KeyPair keyPair) {
+        byte[][] keyBytes = new byte[2][];
+        keyBytes[0] = keyPair.getPublic().getEncoded();
+        keyBytes[1] = keyPair.getPrivate().getEncoded();
+        return keyBytes;
+    }
+
+    /**
+     * Converts byte arrays representing public and private keys to a KeyPair object.
+     *
+     * @param publicKeyBytes  byte array representing the public key
+     * @param privateKeyBytes byte array representing the private key
+     * @param algorithm       the algorithm name (e.g., RSA)
+     * @return KeyPair object containing the public and private keys
+     */
+    public static KeyPair bytesToKeyPair(
+        byte[] publicKeyBytes,
+        byte[] privateKeyBytes,
+        String algorithm
+    ) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+        X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
+            publicKeyBytes
+        );
+        PrivateKey privateKey = keyFactory.generatePrivate(
+            new PKCS8EncodedKeySpec(privateKeyBytes)
+        );
+        PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+        return new KeyPair(publicKey, privateKey);
+    }
 }
