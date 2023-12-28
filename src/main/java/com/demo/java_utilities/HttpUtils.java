@@ -122,13 +122,75 @@ public class HttpUtils {
     }
 
     /**
-     * Overloaded method to close resources without an OutputStream.
+     * Performs a HTTP POST request with multipart form data to the specified URL.
+     *
+     * @param url        the URL to send the POST request to
+     * @param multipartData the multipart form data as a byte array
+     * @param contentType the content type of the multipart data (e.g., "multipart/form-data; boundary=...")
+     * @return the response body as a string
+     * @throws IOException if an I/O exception occurs
+     */
+    public static String doPostMultipart(
+        String url,
+        byte[] multipartData,
+        String contentType
+    ) throws IOException {
+        HttpURLConnection conn = null;
+        BufferedReader reader = null;
+        OutputStream outputStream = null;
+        try {
+            URL postUrl = new URL(url);
+            conn = (HttpURLConnection) postUrl.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", contentType);
+
+            // Write the multipart data to the request body
+            outputStream = conn.getOutputStream();
+            outputStream.write(multipartData);
+            outputStream.flush();
+
+            // Read the response
+            reader = new BufferedReader(
+                new InputStreamReader(conn.getInputStream())
+            );
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            return response.toString();
+        } finally {
+            closeResources(conn, reader, outputStream);
+        }
+    }
+
+    /**
+     * Closes all resources associated with the HTTP connection.
+     *
+     * @param conn      the HttpURLConnection object
+     * @param reader    the BufferedReader for reading response
+     * @param output    the OutputStream for writing request body (optional)
      */
     private static void closeResources(
         HttpURLConnection conn,
-        BufferedReader reader
+        BufferedReader reader,
+        OutputStream output
     ) {
-        closeResources(conn, reader, null);
+        try {
+            if (reader != null) {
+                reader.close();
+            }
+            if (output != null) {
+                output.close();
+            }
+            if (conn != null) {
+                conn.disconnect();
+            }
+        } catch (IOException e) {
+            // Handle or log exception
+            e.printStackTrace();
+        }
     }
 
     /**
